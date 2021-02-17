@@ -1,21 +1,21 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
-#include <ctype.h>
+#include <ctype.h> // using isprint()
 #include <stdlib.h>
+#include <dirent.h> // accessing directories
 
 int main(int argc, char *argv[])
 {
     // parse options
 
-    char tiles_dir[100];
-    scanf("tiles", tiles_dir);
-
     int input_is_stdin = 1;
     int output_is_stdout = 1;
+    int tiles_dir_is_default = 1;
 
-    FILE *input;
-    FILE *output;
+    char *input_file;
+    char *output_file;
+    char* tiles_dir;
 
     int c = getopt(argc, argv, "iop:");
     while ( c != -1)
@@ -24,14 +24,15 @@ int main(int argc, char *argv[])
         {
             case 'i': // update input method
                 input_is_stdin = 0;
-                char *input_file = optarg;
+                input_file = optarg;
                 break;
             case 'o': // update output method
                 output_is_stdout = 0;
-                char *output_file = optarg;
+                output_file = optarg;
                 break;
             case 'p': // update 'tiles' directory path
-                char *new_tiles_dir = optarg;
+                tiles_dir_is_default = 0;
+                tiles_dir = optarg;
                 break;
             case '?':
                 if (optopt == 'i' || optopt == 'o' || optopt == 'p')
@@ -47,9 +48,41 @@ int main(int argc, char *argv[])
         c = getopt(argc, argv, "iop:");
     }
 
+    if (tiles_dir_is_default)
+        tiles_dir = "./tiles";
 
-    tiles = [];
-    // get tiles
+    fprintf(stderr, "Reading tiles from %s", tiles_dir);    
+
+    // opening the tiles directory
+
+    DIR *d;
+    struct dirent *dir;
+    d = opendir(tiles_dir);
+
+    // determine the number of tiles
+    int tiles_n = 0;
+    while((dir = readdir(d)) != NULL) {
+        // remember, when str1 == str2, strcmp == 0.
+        if ( strcmp(dir->d_name, ".") && strcmp(dir->d_name, "..") )
+            tiles_n++;
+    }
+    rewinddir(d);
+
+    char **tile_names = (char**) malloc(sizeof(char*) * tiles_n);
+
+    // store tile names for later use
+    int i = 0;
+    while((dir = readdir(d)) != NULL) {
+        if ( strcmp(dir->d_name, ".") && strcmp(dir->d_name, "..") )
+        {
+            tile_names[i] = (char*) malloc (strlen(dir->d_name) + 1);
+            strncpy (tile_names[i], dir->d_name, strlen(dir->d_name));
+            i++;
+        }
+    }
+
+    // get tile data
+
     open(tiles_dir)
         open(file1 in tiles)
     {
