@@ -1,4 +1,10 @@
+# Tiles
 tiles20
 tiles_lol
+#Tests
 test.c
 testing
+
+#Binaries
+a.out
+*.o
