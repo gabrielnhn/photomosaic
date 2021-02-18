@@ -60,6 +60,12 @@ int main(int argc, char *argv[])
     DIR *d;
     struct dirent *dir;
     d = opendir(tiles_dir);
+    if (!d)
+    {
+        fprintf(stderr, "Error opening 'tiles' directory\n");
+        exit(1);
+    }
+
 
     // determine the number of tiles
     int tiles_n = 0;
@@ -68,78 +74,88 @@ int main(int argc, char *argv[])
         if ( strcmp(dir->d_name, ".") && strcmp(dir->d_name, "..") )
             tiles_n++;
     }
+    fprintf(stderr, "There are %d tiles in %s\n", tiles_n, tiles_dir);
     rewinddir(d);
 
     // get the size of the tiles 
 
     int valid_file = 0;
-    int tile_size;
+    pair_t tile_size;
 
-    while(((dir = readdir(d)) != NULL) && valid_file) {
+    while(((dir = readdir(d)) != NULL) && !valid_file) {
         // remember, when str1 == str2, strcmp == 0.
-        if ( strcmp(dir->d_name, ".") && strcmp(dir->d_name, "..") )
+        if ( strcmp(dir->d_name, ".") && strcmp(dir->d_name, ".."))
+        {
             valid_file = 1;
-            tile_size = filename_to_size(dir->d_name);
+
+            // get path to file
+            char file_path[LINE_MAX];
+            char point_slash[] = "./";
+            char slash[] = "/";
+            strcpy(file_path, point_slash);
+            strcat(file_path, tiles_dir);
+            strcat(file_path, slash); 
+
+            strcat(file_path, dir->d_name); 
+            // fprintf(stderr, "file_path: %s\n", file_path);
+            tile_size = filename_to_size(file_path);
+            
+        }
     }
 
+    fprintf(stderr, "Tile size is %d-%d\n", tile_size.width, tile_size.height);
     // parse and store tile images
 
-    image_t *tiles = (image_t*) malloc(sizeof(image_t) * tiles_n);
+    image_t **tiles = (image_t**) malloc(sizeof(image_t*) * tiles_n);
 
     int i = 0;
     while((dir = readdir(d)) != NULL) {
         if ( strcmp(dir->d_name, ".") && strcmp(dir->d_name, "..") )
         {
-            tiles[i] = filename_to_image(dir->d_name);
+            // get path to file
+            char file_path[LINE_MAX];
+            char point_slash[] = "./";
+            char slash[] = "/";
+            strcpy(file_path, point_slash);
+            strcat(file_path, tiles_dir);
+            strcat(file_path, slash); 
+
+            strcat(file_path, dir->d_name);
+            tiles[i] = filename_to_image(file_path, tile_size);
             i++;
         }
     }
 
-    // get tile data
-
-    for (file in tiles_dir)
-    {
-        open(file)
-            matrix = allocate_matrix(size);
-        image_from_file(matrix, file);
-        tiles.insert(matrix)
-    }
-
-
-
-
-
-
     // calculate the predominant colour
-    predominant_colours = [];
-    for (tile in tiles)
-    {
-        colour = calculate_predom_colour(tile);
-        predominant_colours.insert(colour);
-    }
+    // predominant_colours = [];
+    // for (tile in tiles)
+    // {
+    //     colour = calculate_predom_colour(tile);
+    //     predominant_colours.insert(colour);
+    // }
 
-    // open main input file
-    open(input)
-        type = input.type;
-    // split into chunks of $size
-    for (pixel_chunk(size) in input)
-    {
-        chunk_colour = calculate_predom_colour(pizel_chunk)
+    // // open main input file
+    // open(input)
+    //     type = input.type;
+    // // split into chunks of $size
+    // for (pixel_chunk(size) in input)
+    // {
+    //     chunk_colour = calculate_predom_colour(pizel_chunk)
 
-            // find the tile with the closest predominant colour
-            min = __INT_MAX__;
-        for (colour in predominant_colours)
-            if (colour_difference(chunk_colour, colour) < min)
-                min = colour_difference(chunk_colour, colour)
-                    min_index = colour_index;
+    //         // find the tile with the closest predominant colour
+    //         min = __INT_MAX__;
+    //     for (colour in predominant_colours)
+    //         if (colour_difference(chunk_colour, colour) < min)
+    //             min = colour_difference(chunk_colour, colour)
+    //                 min_index = colour_index;
 
-        //replace chunk with the tile
+    //     //replace chunk with the tile
 
-        substitute(pixel_chunk, tiles[min_index]);
+    //     substitute(pixel_chunk, tiles[min_index]);
 
-        // write it using the same type as the input
-        save_image(output, type);
-    }
+    //     // write it using the same type as the input
+    //     save_image(output, type);
+    // }
 
     return 0;
 }
