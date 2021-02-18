@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
         fprintf(stderr, "Error opening 'tiles' directory\n");
         exit(1);
     }
-
+    rewinddir(d);
 
     // determine the number of tiles
     int tiles_n = 0;
@@ -83,8 +83,8 @@ int main(int argc, char *argv[])
     pair_t tile_size;
 
     while(((dir = readdir(d)) != NULL) && !valid_file) {
-        // remember, when str1 == str2, strcmp == 0.
         if ( strcmp(dir->d_name, ".") && strcmp(dir->d_name, ".."))
+        // remember, when str1 == str2, strcmp() == 0.
         {
             valid_file = 1;
 
@@ -93,6 +93,7 @@ int main(int argc, char *argv[])
             
         }
     }
+    rewinddir(d);
 
     fprintf(stderr, "Tile size is %d-%d\n", tile_size.width, tile_size.height);
     // parse and store tile images
@@ -105,19 +106,28 @@ int main(int argc, char *argv[])
         {
             char* file_path_str = file_path(tiles_dir, dir->d_name);
             tiles[i] = filename_to_image(file_path_str, tile_size);
-            i++;
+            i += 1;
+            fprintf(stderr, "i == %d\n", i);
         }
     }
 
     fprintf(stderr, "All %d tiles were stored successfully\n", tiles_n);
 
-    // calculate the predominant colour
-    // predominant_colours = [];
-    // for (tile in tiles)
-    // {
-    //     colour = calculate_predom_colour(tile);
-    //     predominant_colours.insert(colour);
-    // }
+    // calculate the predominant colour of each tile
+    pixel_t* predominant_colours = (pixel_t*) malloc(tiles_n * sizeof(pixel_t));
+
+    for (int i = 0; i < tiles_n; i++)
+    {
+        pair_t start, end;
+        start.width = 0; start.height = 0;
+        end.width = tiles[i]->width; end.height = tiles[i]->height; 
+
+        pixel_t colour = calculate_predom_colour(tiles[i], start, end);
+        predominant_colours[i] = colour;
+    }
+
+    // for (int i = 0; i < tiles_n; i++)
+    //     print_pixel(predominant_colours[i]);
 
     // // open main input file
     // open(input)

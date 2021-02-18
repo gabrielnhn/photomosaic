@@ -1,4 +1,6 @@
 #include "functions.h"
+#include <math.h>
+
 
 void bad_malloc()
 {
@@ -215,4 +217,41 @@ void print_image(image_t* image)
         }
         printf("\n");
     }
+}
+
+void print_pixel(pixel_t pixel)
+{
+    printf("%d %d %d\n", pixel.r, pixel.g, pixel.b);
+}
+
+pixel_t calculate_predom_colour(image_t* image, pair_t start_coord, pair_t end_coord)
+// calculate the predominant colour of a chunk of `image`, defined by the coordinates.
+// shoutouts to https://sighack.com/post/averaging-rgb-colors-the-right-way
+{
+    int red_s = 0;
+    int green_s = 0;
+    int blue_s = 0;
+    int pixels_n = 0;
+    pixel_t pixel;
+
+    for(int y = start_coord.height; y < end_coord.height; y++)
+    {
+        for(int x = start_coord.width; x < end_coord.width; x++)
+        {
+            pixel = image->pixels[y][x];
+
+            red_s += pixel.r * pixel.r;
+            green_s += pixel.g * pixel.g;
+            blue_s += pixel.b * pixel.b;
+
+            pixels_n++;
+        }
+    }
+
+    pixel.r = sqrt(red_s/pixels_n);
+    pixel.g = sqrt(green_s/pixels_n);
+    pixel.b = sqrt(blue_s/pixels_n);
+
+    return pixel;
+
 }
