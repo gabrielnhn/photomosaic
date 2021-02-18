@@ -30,4 +30,8 @@ void bad_filename(char filename[]);
 
 image_t* new_image(int width, int height); 
 
-int filename_to_size(char* filename);
+pair_t filename_to_size(char* filename);
+
+image_t* filename_to_image(char* filename, pair_t size);
+
+void print_image(image_t* image);
