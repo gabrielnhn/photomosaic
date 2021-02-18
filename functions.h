@@ -35,7 +35,7 @@ image_t* new_image(int width, int height);
 
 pair_t filename_to_size(char* filename);
 
-image_t* filename_to_image(char* filename, pair_t size);
+image_t* filename_to_image(char* filename, pair_t size, int* image_type);
 
 void print_image(image_t* image);
 

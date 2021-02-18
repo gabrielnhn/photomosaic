@@ -94,7 +94,7 @@ pair_t filename_to_size(char* filename)
     }
 }
 
-image_t* filename_to_image(char* filename, pair_t size)
+image_t* filename_to_image(char* filename, pair_t size, int* image_type)
 {
 
     FILE* file;
@@ -105,12 +105,12 @@ image_t* filename_to_image(char* filename, pair_t size)
 
     image_t *image = new_image(size.width, size.height);
     
-    int image_type = 0;
+    *image_type = 0;
 
     char line[LINE_MAX];
     char line_buffer[LINE_MAX];
     
-    while(!feof(file) && image_type == 0)
+    while(!feof(file) && *image_type == 0)
     // get image type (P3 or P6)
     {
         fgets(line_buffer, LINE_MAX, file);
@@ -120,18 +120,18 @@ image_t* filename_to_image(char* filename, pair_t size)
         {
 
             if (strcmp(line, "P3") == 0)
-                image_type = 3;
+                *image_type = 3;
             else
             {
                 if (strcmp(line, "P6") == 0) // sanity check
-                    image_type = 6;
+                    *image_type = 6;
                 else
-                    image_type = -1;
+                    *image_type = -1;
             }
         }
     }
-    // printf("image_type == %d\n", image_type);
-    if (image_type != 3 && image_type != 6)
+    // printf("*image_type == %d\n", *image_type);
+    if (*image_type != 3 && *image_type != 6)
     {
         fprintf(stderr, "Error parsing file %s\n", filename);
         exit(1);
@@ -169,7 +169,7 @@ image_t* filename_to_image(char* filename, pair_t size)
     }
 
     // read them pixels
-    if (image_type == 3)
+    if (*image_type == 3)
     {
         for (int y = 0; y < image->height; y++)
             for(int x = 0; x < image->width; x++)
@@ -178,7 +178,7 @@ image_t* filename_to_image(char* filename, pair_t size)
             }
     }
 
-    else if (image_type == 6) // again, sanity check
+    else if (*image_type == 6) // again, sanity check
     {
         // every time we multiply by 3 is because each pixel is (r, g, b).
         char* buffer = (char*) malloc (image->width * 3 * sizeof(char)); // store each line
