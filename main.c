@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <dirent.h> // accessing directories
 
+#include "functions.h"
+
 int main(int argc, char *argv[])
 {
     // parse options
@@ -51,7 +53,7 @@ int main(int argc, char *argv[])
     if (tiles_dir_is_default)
         tiles_dir = "./tiles";
 
-    fprintf(stderr, "Reading tiles from %s", tiles_dir);    
+    fprintf(stderr, "Reading tiles from %s\n", tiles_dir);    
 
     // opening the tiles directory
 
@@ -68,26 +70,33 @@ int main(int argc, char *argv[])
     }
     rewinddir(d);
 
-    char **tile_names = (char**) malloc(sizeof(char*) * tiles_n);
+    // get the size of the tiles 
 
-    // store tile names for later use
+    int valid_file = 0;
+    int tile_size;
+
+    while(((dir = readdir(d)) != NULL) && valid_file) {
+        // remember, when str1 == str2, strcmp == 0.
+        if ( strcmp(dir->d_name, ".") && strcmp(dir->d_name, "..") )
+            valid_file = 1;
+            tile_size = filename_to_size(dir->d_name);
+    }
+
+    // parse and store tile images
+
+    image_t *tiles = (image_t*) malloc(sizeof(image_t) * tiles_n);
+
     int i = 0;
     while((dir = readdir(d)) != NULL) {
         if ( strcmp(dir->d_name, ".") && strcmp(dir->d_name, "..") )
         {
-            tile_names[i] = (char*) malloc (strlen(dir->d_name) + 1);
-            strncpy (tile_names[i], dir->d_name, strlen(dir->d_name));
+            tiles[i] = filename_to_image(dir->d_name);
             i++;
         }
     }
 
     // get tile data
 
-    open(tiles_dir)
-        open(file1 in tiles)
-    {
-        size = get_imagesize();
-    }
     for (file in tiles_dir)
     {
         open(file)
