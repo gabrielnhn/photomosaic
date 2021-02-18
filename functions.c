@@ -160,7 +160,7 @@ image_t* filename_to_image(char* filename, pair_t size)
     else if (image_type == 6) // again, sanity check
     {
         // every time we multiply by 3 is because each pixel is (r, g, b).
-        char* buffer = (char*) malloc (image->width * 3 * sizeof(char) + 4); // store each line
+        char* buffer = (char*) malloc (image->width * 3 * sizeof(char)); // store each line
         if (!buffer)
             bad_malloc();
 
