@@ -58,7 +58,11 @@ pair_t filename_to_size(char* filename)
     // fprintf(stderr, "getting size from %s\n", filename);
     FILE* file;
 
-    file = fopen(filename, "r");
+    if (strcmp(filename, "STDIN") == 0)
+        file = stdin;
+    else
+        file = fopen(filename, "r");
+    
     // fprintf(stderr, "file is %p", file);
 
     if (file == NULL)
