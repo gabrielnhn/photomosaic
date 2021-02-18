@@ -88,17 +88,8 @@ int main(int argc, char *argv[])
         {
             valid_file = 1;
 
-            // get path to file
-            char file_path[LINE_MAX];
-            char point_slash[] = "./";
-            char slash[] = "/";
-            strcpy(file_path, point_slash);
-            strcat(file_path, tiles_dir);
-            strcat(file_path, slash); 
-
-            strcat(file_path, dir->d_name); 
-            // fprintf(stderr, "file_path: %s\n", file_path);
-            tile_size = filename_to_size(file_path);
+            char* file_path_str = file_path(tiles_dir, dir->d_name);
+            tile_size = filename_to_size(file_path_str);
             
         }
     }
@@ -112,19 +103,13 @@ int main(int argc, char *argv[])
     while((dir = readdir(d)) != NULL) {
         if ( strcmp(dir->d_name, ".") && strcmp(dir->d_name, "..") )
         {
-            // get path to file
-            char file_path[LINE_MAX];
-            char point_slash[] = "./";
-            char slash[] = "/";
-            strcpy(file_path, point_slash);
-            strcat(file_path, tiles_dir);
-            strcat(file_path, slash); 
-
-            strcat(file_path, dir->d_name);
-            tiles[i] = filename_to_image(file_path, tile_size);
+            char* file_path_str = file_path(tiles_dir, dir->d_name);
+            tiles[i] = filename_to_image(file_path_str, tile_size);
             i++;
         }
     }
+
+    fprintf(stderr, "All %d tiles were stored successfully\n", tiles_n);
 
     // calculate the predominant colour
     // predominant_colours = [];

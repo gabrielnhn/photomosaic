@@ -28,6 +28,8 @@ void bad_malloc();
 
 void bad_filename(char filename[]);
 
+char* file_path(char dir[], char file[]);
+
 image_t* new_image(int width, int height); 
 
 pair_t filename_to_size(char* filename);

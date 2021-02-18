@@ -12,6 +12,22 @@ void bad_filename(char filename[])
     exit(1);
 }
 
+char* file_path(char dir[], char file[])
+{
+
+    char point_slash[] = "./";
+    char slash[] = "/";
+
+    char* file_path_str= (char*) malloc (sizeof(char) * LINE_MAX);
+    
+    strcpy(file_path_str, point_slash);
+    strcat(file_path_str, dir);
+    strcat(file_path_str, slash); 
+
+    strcat(file_path_str, file);
+
+    return file_path_str;
+}
 
 image_t* new_image(int width, int height) 
 {
