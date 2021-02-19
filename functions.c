@@ -348,7 +348,7 @@ void write_image(image_t* image, char* filename, int image_type)
                 fwrite(buffer, sizeof(char), 3, file);
             }
 
-            fputs("\n", file);
+            // fputs("\n", file);
 
         }
     }
