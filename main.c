@@ -26,8 +26,12 @@ int main(int argc, char *argv[])
         switch (c)
         {
         case 'h':
-            fprintf(stderr, "This is a photomosaic generator.");
-            fprintf(stderr, "This is a photomosaic generator.");
+            fprintf(stderr, "This is a photo mosaic generator. Try it out!\n");
+            fprintf(stderr, "Input: a P3 or P6 '.ppm' file.\n");
+            fprintf(stderr, "Output: a P3 or P6 '.ppm' file, depending on the input.\n");
+            fprintf(stderr, "You will also need: a P3 and/or P6 '.ppm' files directory of tile images.\n\n");
+            fprintf(stderr, "Usage: './mosaico [ -p tiles_directory ] [ -i input_file ] [ -o output_file ]'\n");
+
             exit(1);
             break;
         case 'o': // update output method
@@ -60,12 +64,13 @@ int main(int argc, char *argv[])
         c = getopt(argc, argv, "ho:p:i:");
     }
 
+    // opening the tiles directory
+
     if (tiles_dir_is_default)
         tiles_dir = "./tiles";
 
     fprintf(stderr, "Reading tiles from '%s'\n", tiles_dir);
 
-    // opening the tiles directory
 
     DIR *d;
     struct dirent *dir;
@@ -88,10 +93,7 @@ int main(int argc, char *argv[])
     fprintf(stderr, "There are %d tiles in %s\n", tiles_n, tiles_dir);
     rewinddir(d);
 
-    // get the size of the tiles
-
-
-    // parse and store tile images
+    // parse and store tiles
 
     image_t **tiles = (image_t **)malloc(sizeof(image_t *) * tiles_n);
 
@@ -140,7 +142,9 @@ int main(int argc, char *argv[])
     // for (int i = 0; i < tiles_n; i++)
     //     print_pixel(predominant_colours[i]);
 
+
     // open main input file
+
     if (input_is_stdin)
         strcpy(input_file, "STDIN");
 
@@ -153,7 +157,6 @@ int main(int argc, char *argv[])
     fprintf(stderr, "Image type is P%d\n", input_type);
     fprintf(stderr, "Image size is %dx%d\n", input_size.width, input_size.height);
 
-    // print_image(input_image);
     // split input image into chunks of $tile_size
 
     fprintf(stderr, "Replacing chunks\n");
@@ -175,12 +178,7 @@ int main(int argc, char *argv[])
             if (chunk_end.width  > input_image->width)
                 chunk_end.width = input_image->width;
 
-            // if (y >= 640)
-            // fprintf(stderr, "Replacing chunk from (%d,%d) to (%d, %d)\n", chunk_start.height, chunk_start.width, chunk_end.height, chunk_end.width);
-
             pixel_t chunk_colour = calculate_predom_colour(input_image, chunk_start, chunk_end);
-        
-            // fprintf(stderr, "colour calculated\n");
 
             // find the tile whose predominant colour is the closest to the image chunk
             
@@ -201,9 +199,6 @@ int main(int argc, char *argv[])
             // now we have the optimal tile!
             // let us replace the chunk.
 
-            // fprintf(stderr, "index: %d\n", min_index);
-            // print_image(tiles[min_index]);
-
             replace_chunk(input_image, tiles[min_index], chunk_start, chunk_end);
         }
     }
@@ -216,7 +211,6 @@ int main(int argc, char *argv[])
     }
     free(tiles);
     free(predominant_colours);
-
 
     // write the output image
     if (output_is_stdout)
