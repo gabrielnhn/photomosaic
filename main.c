@@ -226,7 +226,7 @@ int main(int argc, char *argv[])
     fprintf(stderr, "Writing image...\n");
     write_image(input_image, output_file, input_type);
 
-    // free_image(input_image);
+    free_image(input_image);
 
     return 0;
 }
