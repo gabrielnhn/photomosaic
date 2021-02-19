@@ -5,6 +5,8 @@ tiles_lol
 
 # Tests
 *.ppm
-#Binaries
+
+# Objects/Binaries
+mosaico
 a.out
 *.o
