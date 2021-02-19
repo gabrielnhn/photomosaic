@@ -2,32 +2,35 @@
 #include <math.h>
 
 void bad_malloc()
+// exit program on bad_malloc()
 {
     fprintf(stderr, "Error: bad memory allocation\n");
     exit(1);
 }
 
 void bad_filename(char filename[])
+// exit program on bad filename (file not found)
 {
     fprintf(stderr, "Error: bad filename %s\n", filename);
     exit(1);
 }
 
 char *file_path(char dir[], char file[])
+// return a string with the path to `file` in `dir` 
 {
     char slash[] = "/";
 
     char *file_path_str = (char *)malloc(sizeof(char) * LINE_MAX);
 
-    strcpy(file_path_str, dir);
-    strcat(file_path_str, slash);
-
-    strcat(file_path_str, file);
+    strcpy(file_path_str, dir); // str == "dir"
+    strcat(file_path_str, slash); // str == "dir/"
+    strcat(file_path_str, file); // str == "dir/file"
 
     return file_path_str;
 }
 
 image_t *new_image(int width, int height)
+// allocate enough memory for an image with such . return it as a pointer
 {
     image_t *image = (image_t *)malloc(sizeof(image_t));
     image->width = width;
@@ -48,6 +51,9 @@ image_t *new_image(int width, int height)
 }
 
 image_t *filename_to_image(char *filename, pair_t *size, int *image_type)
+// from `filename`, parse a '.ppm' file (P3 or P6) and
+// store its content in an `image_t`. return it as pointer.
+// one may also get some parameters through `size` and `image_type` (P3 or P6)
 {
     FILE *file;
 
@@ -82,7 +88,7 @@ image_t *filename_to_image(char *filename, pair_t *size, int *image_type)
         exit(1);
     }
 
-    // get image height/width (again)
+    // get image height/width
     int has_read_sizes = 0;
 
     while (!has_read_sizes)
@@ -115,7 +121,7 @@ image_t *filename_to_image(char *filename, pair_t *size, int *image_type)
     if (*image_type == 3)
     {
         for (int y = 0; y < image->height; y++)
-            for (int x = 0; x < image->width; x++)
+            for (int x = 0; x < image->width; x++) // store each line
             {
                 fscanf(file, "%i %i %i", &(image->pixels[y][x].r), &(image->pixels[y][x].g), &(image->pixels[y][x].b));
             }
@@ -146,19 +152,8 @@ image_t *filename_to_image(char *filename, pair_t *size, int *image_type)
     return image;
 }
 
-void print_image(image_t *image)
-{
-    for (int y = 0; y < image->height; y++)
-    {
-        for (int x = 0; x < image->width; x++)
-        {
-            printf("%d.%d.%d ", image->pixels[y][x].r, image->pixels[y][x].g, image->pixels[y][x].b);
-        }
-        printf("\n");
-    }
-}
-
 void print_pixel(pixel_t pixel)
+// print pixel in 'stdin'
 {
     printf("%d %d %d\n", pixel.r, pixel.g, pixel.b);
 }
@@ -195,6 +190,7 @@ pixel_t calculate_predom_colour(image_t *image, pair_t start_coord, pair_t end_c
 }
 
 double colour_difference(pixel_t p, pixel_t q)
+// calculate the difference between colours using "redmean"
 {
     double r_prime = (p.r + q.r) / 2;
 
@@ -205,6 +201,7 @@ double colour_difference(pixel_t p, pixel_t q)
 }
 
 void replace_chunk(image_t *to_fill, image_t *filler, pair_t start, pair_t end)
+// replace a chunk of an image `to_fill` with a `filler` image, from `start` to `end`.
 {
  
     int y = 0;
@@ -221,6 +218,7 @@ void replace_chunk(image_t *to_fill, image_t *filler, pair_t start, pair_t end)
 }
 
 void free_image(image_t *image)
+// opposite of `new_image()`, deallocate the memory used by the image.
 {
     for (int i = 0; i < image->height; i++)
     {
@@ -233,6 +231,7 @@ void free_image(image_t *image)
 }
 
 void write_image(image_t *image, char *filename, int image_type)
+// write `image` to a `filename`, according to `image_type` (3 -> P3 and 6 -> P6)
 {
     FILE *file;
 
@@ -251,15 +250,16 @@ void write_image(image_t *image, char *filename, int image_type)
     // width, height
     fprintf(file, "%d %d\n", image->width, image->height);
 
-    //maxvalue
+    // maxvalue
     fprintf(file, "%d\n", 255);
 
-    if (image_type == 3)
+    if (image_type == 3) // p3
     {
         for (int i = 0; i < image->height; i++)
         {
             for (int j = 0; j < image->width; j++)
             {
+                // write line by line
                 fprintf(file, "%d %d %d ", image->pixels[i][j].r, image->pixels[i][j].g, image->pixels[i][j].b);
             }
             fprintf(file, "\n");
@@ -267,7 +267,7 @@ void write_image(image_t *image, char *filename, int image_type)
     }
     else // p6
     {
-        char buffer[3];
+        char buffer[3]; // write pixel by pixel 
         for (int i = 0; i < image->height; i++)
         {
             for (int j = 0; j < image->width; j++)

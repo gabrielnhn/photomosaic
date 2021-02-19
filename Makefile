@@ -19,5 +19,6 @@ functions.o: functions.c functions.h
 
 purge: clean
 	rm mosaico
+	
 clean:
 	rm *.o
