@@ -112,29 +112,20 @@ image_t* filename_to_image(char* filename, pair_t size, int* image_type)
     *image_type = 0;
 
     char line[LINE_MAX];
-    char line_buffer[LINE_MAX];
     
-    while(!feof(file) && *image_type == 0)
     // get image type (P3 or P6)
+    
+    int ret = fscanf(file, "%s", line);
+    if (ret == 1)
     {
-        fgets(line_buffer, LINE_MAX, file);
-        sscanf(line_buffer, "%s", line);
-        // printf("%s", line);
-        if (strncmp(line, "#", 1) != 0) // line not a comment
+        if (strcmp(line, "P3") == 0)
+            *image_type = 3;
+        else
         {
-
-            if (strcmp(line, "P3") == 0)
-                *image_type = 3;
-            else
-            {
-                if (strcmp(line, "P6") == 0) // sanity check
-                    *image_type = 6;
-                else
-                    *image_type = -1;
-            }
+            if (strcmp(line, "P6") == 0) // sanity check
+                *image_type = 6;
         }
     }
-    // printf("*image_type == %d\n", *image_type);
     if (*image_type != 3 && *image_type != 6)
     {
         fprintf(stderr, "Error parsing file %s\n", filename);
@@ -146,10 +137,11 @@ image_t* filename_to_image(char* filename, pair_t size, int* image_type)
     int unused_variable;
 
 
-    while(!feof(file) && !has_read_sizes)
+    while(!has_read_sizes)
     {
         fgets(line, LINE_MAX, file);
-        
+        // printf("%s", line);
+
         // printf("Second line:%s", line);
         if (strncmp(line, "#", 1) != 0) // line not a comment
         {
@@ -157,7 +149,7 @@ image_t* filename_to_image(char* filename, pair_t size, int* image_type)
             // printf("2ndLine ret == %d\n", ret);
             if (ret == 2)
                 has_read_sizes = 1;
-            
+            // printf("values: %d\n", has_read_sizes);
         }
     }
 
@@ -178,28 +170,24 @@ image_t* filename_to_image(char* filename, pair_t size, int* image_type)
         for (int y = 0; y < image->height; y++)
             for(int x = 0; x < image->width; x++)
             {
-                fscanf(file, "%u %u %u", &(image->pixels[y][x].r), &(image->pixels[y][x].g), &(image->pixels[y][x].b));
+                fscanf(file, "%i %i %i", &(image->pixels[y][x].r), &(image->pixels[y][x].g), &(image->pixels[y][x].b));
             }
     }
 
     else if (*image_type == 6) // again, sanity check
     {
         // every time we multiply by 3 is because each pixel is (r, g, b).
-        char* buffer = (char*) malloc (image->width * 3 * sizeof(char)); // store each line
-        if (!buffer)
-            bad_malloc();
+        unsigned char buffer[3]; // store each pixel
 
         for (int y = 0; y < image->height; y++)
         {
             // printf("reading pixels from line %d\n", y);
-            fread(buffer, sizeof(char) * 3, image->width, file);
             for(int x = 0; x < image->width; x++)
             {
-                // printf("storing pixel %d-%d: ", y, x);
-                // printf("%d %d %d\n", buffer[3*x], buffer[3*x + 1], buffer[3*x + 2]);
-                image->pixels[y][x].r = buffer[3*x];
-                image->pixels[y][x].g = buffer[3*x + 1];
-                image->pixels[y][x].b = buffer[3*x + 2];
+                fread(buffer, sizeof(unsigned char), 3, file);
+                image->pixels[y][x].r = buffer[0];
+                image->pixels[y][x].g = buffer[1];
+                image->pixels[y][x].b = buffer[2];
             }
         }
         // printf("Image read.\n");
@@ -242,6 +230,7 @@ pixel_t calculate_predom_colour(image_t* image, pair_t start_coord, pair_t end_c
     {
         for(int x = start_coord.width; x < end_coord.width; x++)
         {
+            // printf("%d-%d\n", y, x);
             pixel = image->pixels[y][x];
 
             red_s += pixel.r * pixel.r;
@@ -265,7 +254,7 @@ double colour_difference(pixel_t p, pixel_t q)
     double r_prime = (p.r + q.r) / 2;
 
     double difference;
-    difference = sqrt( (2 + r_prime/256)*(p.r - q.r)*(p.r - q.r)  + 4*(p.g - q.g) + (2 + ((255 -r_prime)/256))*(p.b - q.b) );
+    difference = sqrt( (2 + (r_prime/256))*(p.r - q.r)*(p.r - q.r)  + 4*(p.g - q.g)*(p.g - q.g) + (2 + ((255 -r_prime)/256))*(p.b - q.b)*(p.b - q.b) );
 
     return difference;
 }
@@ -294,7 +283,7 @@ void write_image(image_t* image, char* filename, int image_type)
     else
         file = fopen(filename, "w");
 
-    char* buffer = (char*) malloc (image->width * 3 * 6 * sizeof(char));
+    char* buffer = (char*) malloc (image->width * 3 * 5 * sizeof(char));
     // we'll use the same buffer no matter what type of image.
     // the buffer should, therefore, be able to store every char of a p3 image line.
     // Assuming we need 3chars for each number in RGB(3 values), the spaces and possibly the minus sign ("-")..
@@ -343,8 +332,6 @@ void write_image(image_t* image, char* filename, int image_type)
                 buffer[3*j + 1] = image->pixels[i][j].g;
                 buffer[3*j + 2] = image->pixels[i][j].b ; 
             }
-
-            // fread(buffer, sizeof(char) * 3, image->width, file);
 
             fwrite(buffer, 3 * sizeof(char), image->width, file);
             fputs("\n", file);
