@@ -15,9 +15,8 @@ int main(int argc, char *argv[])
     int output_is_stdout = 1;
     int tiles_dir_is_default = 1;
 
-    char *null_arguments;
-    char *input_file;
-    char *output_file;
+    char input_file[LINE_MAX];
+    char output_file[LINE_MAX];
     char *tiles_dir;
 
     opterr = 0;
@@ -33,12 +32,12 @@ int main(int argc, char *argv[])
             break;
         case 'o': // update output method
             output_is_stdout = 0;
-            output_file = optarg;
+            strncpy(output_file, optarg, LINE_MAX - 1);
             fprintf(stderr, "%s will be the output\n", optarg);
             break;
         case 'i': // update input method
             input_is_stdin = 0;
-            input_file = optarg;
+            strncpy(input_file, optarg, LINE_MAX - 1);
             fprintf(stderr, "%s will be the input\n", optarg);
             break;
         case 'p': // update 'tiles' directory path
@@ -122,6 +121,8 @@ int main(int argc, char *argv[])
         {
             char *file_path_str = file_path(tiles_dir, dir->d_name);
             tiles[i] = filename_to_image(file_path_str, tile_size, &type);
+
+
             i += 1;
             // fprintf(stderr, "i == %d\n", i);
 
@@ -159,32 +160,64 @@ int main(int argc, char *argv[])
         strcpy(input_file, "STDIN");
 
     fprintf(stderr, "Accessing input file...\n");
-    fprintf(stderr, "File is: %s", input_file);
+    fprintf(stderr, "File is: %s\n", input_file);
     int input_type = 0;
     pair_t input_size = filename_to_size(input_file);
     image_t *input_image = filename_to_image(input_file, input_size, &input_type);
 
-    // open(input)
-    //     type = input.type;
-    // // split into chunks of $size
-    // for (pixel_chunk(size) in input)
-    // {
-    //     chunk_colour = calculate_predom_colour(pizel_chunk)
+    fprintf(stderr, "Image type is P%d\n", input_type);
+    fprintf(stderr, "Image size is %dx%d\n", input_size.width, input_size.height);
 
-    //         // find the tile with the closest predominant colour
-    //         min = __INT_MAX__;
-    //     for (colour in predominant_colours)
-    //         if (colour_difference(chunk_colour, colour) < min)
-    //             min = colour_difference(chunk_colour, colour)
-    //                 min_index = colour_index;
+    // print_image(input_image);
+    // split input image into chunks of $tile_size
 
-    //     //replace chunk with the tile
+    fprintf(stderr, "Replacing chunks\n");
 
-    //     substitute(pixel_chunk, tiles[min_index]);
+    for(int y = 0; y < input_image->height; y = y + tile_size.height)
+    {
+        for(int x = 0; x < input_image->width; x = x + tile_size.width)
+        {
+            pair_t chunk_start, chunk_end;
+            chunk_start.height = y; chunk_start.width = x;
+            chunk_end.height = y + tile_size.height - 1; chunk_end.width = x + tile_size.width - 1;
 
-    //     // write it using the same type as the input
-    //     save_image(output, type);
-    // }
+            // fprintf(stderr, "Replacing chunk from (%d,%d) to (%d, %d)\n", chunk_start.height, chunk_start.width, chunk_end.height, chunk_end.width);
+
+            pixel_t chunk_colour = calculate_predom_colour(input_image, chunk_start, chunk_end);
+
+            // find the tile whose predominant colour is the closest to the image chunk
+            
+            // assume its the first one:
+            double min_diff = colour_difference(chunk_colour, predominant_colours[0]);
+            int min_index = 0;
+            // compare to the others
+            for (int k= 1; k < tiles_n; k++)
+            {
+                double diff = colour_difference(chunk_colour, predominant_colours[k]);
+                if (diff < min_diff)
+                {
+                    min_diff = diff;
+                    min_index = k;
+                }
+            }
+
+            // now we have the optimal tile!
+            // let us replace the chunk.
+
+            // fprintf(stderr, "index: %d\n", min_index);
+            // print_image(tiles[min_index]);
+
+            replace_chunk(input_image, tiles[min_index], chunk_start);
+        }
+    }
+
+
+    // write the output image
+    if (output_is_stdout)
+        strcpy(output_file, "STDOUT");
+
+    fprintf(stderr, "Writing image...\n");
+    write_image(input_image, output_file, input_type);
 
     return 0;
 }

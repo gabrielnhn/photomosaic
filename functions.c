@@ -178,7 +178,7 @@ image_t* filename_to_image(char* filename, pair_t size, int* image_type)
         for (int y = 0; y < image->height; y++)
             for(int x = 0; x < image->width; x++)
             {
-                fscanf(file, "%d %d %d", &(image->pixels[y][x].r), &(image->pixels[y][x].g), &(image->pixels[y][x].b));
+                fscanf(file, "%u %u %u", &(image->pixels[y][x].r), &(image->pixels[y][x].g), &(image->pixels[y][x].b));
             }
     }
 
@@ -217,7 +217,7 @@ void print_image(image_t* image)
     {
         for(int x = 0; x < image->width; x++)
         {
-            printf("%d%d%d ", image->pixels[y][x].r, image->pixels[y][x].g, image->pixels[y][x].b);
+            printf("%d.%d.%d ", image->pixels[y][x].r, image->pixels[y][x].g, image->pixels[y][x].b);
         }
         printf("\n");
     }
@@ -257,5 +257,99 @@ pixel_t calculate_predom_colour(image_t* image, pair_t start_coord, pair_t end_c
     pixel.b = sqrt(blue_s/pixels_n);
 
     return pixel;
+
+}
+
+double colour_difference(pixel_t p, pixel_t q)
+{
+    double r_prime = (p.r + q.r) / 2;
+
+    double difference;
+    difference = sqrt( (2 + r_prime/256)*(p.r - q.r)*(p.r - q.r)  + 4*(p.g - q.g) + (2 + ((255 -r_prime)/256))*(p.b - q.b) );
+
+    return difference;
+}
+
+void replace_chunk(image_t* to_fill, image_t* filler, pair_t start)
+{
+
+    for (int i = 0; i < filler->height; i++)
+    {
+        for (int j = 0; j < filler->width; j++)
+        {
+            // print_pixel(filler->pixels[i][j]);
+            to_fill->pixels[start.height + i][start.width + j].r = filler->pixels[i][j].r;
+            to_fill->pixels[start.height + i][start.width + j].g = filler->pixels[i][j].g;
+            to_fill->pixels[start.height + i][start.width + j].b = filler->pixels[i][j].b;
+        }
+    }
+}
+
+void write_image(image_t* image, char* filename, int image_type)
+{
+    FILE* file;
+
+    if (strcmp(filename, "STDOUT") == 0)
+        file = stdout;
+    else
+        file = fopen(filename, "w");
+
+    char* buffer = (char*) malloc (image->width * 3 * 6 * sizeof(char));
+    // we'll use the same buffer no matter what type of image.
+    // the buffer should, therefore, be able to store every char of a p3 image line.
+    // Assuming we need 3chars for each number in RGB(3 values), the spaces and possibly the minus sign ("-")..
+   
+   // header
+
+    if (image_type == 3)
+        fputs("P3\n", file);
+    else
+        fputs("P6\n", file);
+
+    // width, height
+    sprintf(buffer, "%d %d\n", image->width, image->height);
+    fputs(buffer, file);
+
+    //maxvalue
+    sprintf(buffer, "%d\n", 255);
+    fputs(buffer, file);
+
+    if (image_type == 3)
+    {
+        for (int i = 0; i < image->height; i++)
+        {
+            strcpy(buffer, ""); // clear buffer
+
+            for (int j = 0; j < image->width; j++)
+            {
+                char pix[20]; // enough to store every pixel
+
+                sprintf(pix, "%d %d %d ", image->pixels[i][j].r, image->pixels[i][j].g, image->pixels[i][j].b);
+                
+                strcat(buffer, pix);
+            }
+
+            fputs(buffer, file);
+
+        }
+    }
+    else // p6
+    {
+        for (int i = 0; i < image->height; i++)
+        {
+            for (int j = 0; j < image->width; j++)
+            {
+                buffer[3*j] = image->pixels[i][j].r;
+                buffer[3*j + 1] = image->pixels[i][j].g;
+                buffer[3*j + 2] = image->pixels[i][j].b ; 
+            }
+
+            // fread(buffer, sizeof(char) * 3, image->width, file);
+
+            fwrite(buffer, 3 * sizeof(char), image->width, file);
+            fputs("\n", file);
+
+        }
+    }
 
 }

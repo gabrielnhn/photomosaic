@@ -43,3 +43,8 @@ void print_pixel(pixel_t pixel);
 
 pixel_t calculate_predom_colour(image_t* image, pair_t start_coord, pair_t end_coord);
 
+double colour_difference(pixel_t p, pixel_t q);
+
+void replace_chunk(image_t* to_fill, image_t* filler, pair_t start);
+
+void write_image(image_t* image, char* filename, int image_type);
