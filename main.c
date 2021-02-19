@@ -1,3 +1,6 @@
+// Make a photo mosaic!
+// Author: Gabriel Nascarella Hishida
+
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
