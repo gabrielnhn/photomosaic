@@ -232,9 +232,9 @@ pixel_t calculate_predom_colour(image_t* image, pair_t start_coord, pair_t end_c
     int pixels_n = 0;
     pixel_t pixel;
 
-    for(int y = start_coord.height; y < end_coord.height && y < image->height; y++)
+    for(int y = start_coord.height; y < end_coord.height; y++)
     {
-        for(int x = start_coord.width; x < end_coord.width && x< image->width; x++)
+        for(int x = start_coord.width; x < end_coord.width; x++)
         {
             pixel = image->pixels[y][x];
 
