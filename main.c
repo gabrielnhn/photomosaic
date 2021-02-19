@@ -90,23 +90,7 @@ int main(int argc, char *argv[])
 
     // get the size of the tiles
 
-    int valid_file = 0;
-    pair_t tile_size;
 
-    while (((dir = readdir(d)) != NULL) && !valid_file)
-    {
-        if (strcmp(dir->d_name, ".") && strcmp(dir->d_name, ".."))
-        // remember, when str1 == str2, strcmp() == 0.
-        {
-            valid_file = 1;
-
-            char *file_path_str = file_path(tiles_dir, dir->d_name);
-            tile_size = filename_to_size(file_path_str);
-        }
-    }
-    rewinddir(d);
-
-    fprintf(stderr, "Tile size is %d-%d\n", tile_size.width, tile_size.height);
     // parse and store tile images
 
     image_t **tiles = (image_t **)malloc(sizeof(image_t *) * tiles_n);
@@ -115,18 +99,16 @@ int main(int argc, char *argv[])
     int p3_n = 0;
     int p6_n = 0;
     int type = 0;
+    pair_t tile_size;
+
     while ((dir = readdir(d)) != NULL)
     {
         if (strcmp(dir->d_name, ".") && strcmp(dir->d_name, ".."))
         {
-            fprintf(stderr, "%d tiles read until now\n", i);
             char *file_path_str = file_path(tiles_dir, dir->d_name);
-            printf("%s\n", file_path_str);
-            tiles[i] = filename_to_image(file_path_str, tile_size, &type);
-
+            tiles[i] = filename_to_image(file_path_str, &tile_size, &type);
 
             i += 1;
-            // fprintf(stderr, "i == %d\n", i);
 
             if (type == 3)
                 p3_n++;
@@ -134,6 +116,7 @@ int main(int argc, char *argv[])
                 p6_n++;
         }
     }
+    fprintf(stderr, "Tile size is %d-%d\n", tile_size.width, tile_size.height);
 
     fprintf(stderr, "All %d tiles were stored successfully\n", tiles_n);
     fprintf(stderr, "%d P3 tiles and %d P6 tiles\n", p3_n, p6_n);
@@ -164,8 +147,8 @@ int main(int argc, char *argv[])
     fprintf(stderr, "Accessing input file...\n");
     fprintf(stderr, "File is: %s\n", input_file);
     int input_type = 0;
-    pair_t input_size = filename_to_size(input_file);
-    image_t *input_image = filename_to_image(input_file, input_size, &input_type);
+    pair_t input_size;
+    image_t *input_image = filename_to_image(input_file, &input_size, &input_type);
 
     fprintf(stderr, "Image type is P%d\n", input_type);
     fprintf(stderr, "Image size is %dx%d\n", input_size.width, input_size.height);
@@ -175,17 +158,29 @@ int main(int argc, char *argv[])
 
     fprintf(stderr, "Replacing chunks\n");
 
-    for(int y = 0; y < input_image->height; y = y + tile_size.height)
+    for(int y = 0; y < input_image->height; y = y + tile_size.height - 1)
     {
-        for(int x = 0; x < input_image->width; x = x + tile_size.width)
+        for(int x = 0; x < input_image->width; x = x + tile_size.width - 1)
         {
             pair_t chunk_start, chunk_end;
-            chunk_start.height = y; chunk_start.width = x;
-            chunk_end.height = y + tile_size.height - 1; chunk_end.width = x + tile_size.width - 1;
+            chunk_start.height = y;
+            chunk_start.width = x;
 
+            chunk_end.height = y + tile_size.height;
+            chunk_end.width = x + tile_size.width;
+
+            if (chunk_end.height  > input_image->height)
+                chunk_end.height = input_image->height;
+
+            if (chunk_end.width  > input_image->width)
+                chunk_end.width = input_image->width;
+
+            // if (y >= 640)
             // fprintf(stderr, "Replacing chunk from (%d,%d) to (%d, %d)\n", chunk_start.height, chunk_start.width, chunk_end.height, chunk_end.width);
 
             pixel_t chunk_colour = calculate_predom_colour(input_image, chunk_start, chunk_end);
+        
+            // fprintf(stderr, "colour calculated\n");
 
             // find the tile whose predominant colour is the closest to the image chunk
             
@@ -209,17 +204,29 @@ int main(int argc, char *argv[])
             // fprintf(stderr, "index: %d\n", min_index);
             // print_image(tiles[min_index]);
 
-            replace_chunk(input_image, tiles[min_index], chunk_start);
+            replace_chunk(input_image, tiles[min_index], chunk_start, chunk_end);
         }
     }
+
+    fprintf(stderr, "Freeing up unused memory...\n");
+
+    for(int i = 0; i < tiles_n; i++)
+    {
+        free_image(tiles[i]);
+    }
+    free(tiles);
+    free(predominant_colours);
 
 
     // write the output image
     if (output_is_stdout)
         strcpy(output_file, "STDOUT");
 
+    fprintf(stderr, "Output file is %s\n", output_file);
     fprintf(stderr, "Writing image...\n");
     write_image(input_image, output_file, input_type);
+
+    // free_image(input_image);
 
     return 0;
 }

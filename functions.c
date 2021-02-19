@@ -51,10 +51,54 @@ image_t* new_image(int width, int height)
     return image;
 }
 
-pair_t filename_to_size(char* filename)
-// parse PPM file and get the image size (assuming it is a square)
+// pair_t filename_to_size(char* filename)
+// // parse PPM file and get the image size (assuming it is a square)
+// {
+//     // fprintf(stderr, "getting size from %s\n", filename);
+//     FILE* file;
+
+//     if (strcmp(filename, "STDIN") == 0)
+//         file = stdin;
+//     else
+//         file = fopen(filename, "r");
+    
+//     // fprintf(stderr, "file is %p", file);
+
+//     if (file == NULL)
+//         bad_filename(filename);
+
+
+//     char line[LINE_MAX];
+//     fgets(line, LINE_MAX, file);
+
+
+//     int w,h;
+
+//     int ret = sscanf(line, "%d %d", &w, &h);
+//     while(ret != 2 && !feof(file)) // while didn't read width-height
+//     {   
+//         fgets(line, LINE_MAX, file);
+//         ret = sscanf(line, "%d %d", &w, &h);
+//     }
+
+//     fclose(file);
+
+//     if (ret != 2)
+//     {
+//         fprintf(stderr, "Error: Could not get image size in %s\n", filename);
+//         exit(1);
+//     }
+//     else
+//     {
+//         pair_t pair;
+//         pair.width = w;
+//         pair.height = h;
+//         return pair;
+//     }
+// }
+
+image_t* filename_to_image(char* filename, pair_t *size, int* image_type)
 {
-    // fprintf(stderr, "getting size from %s\n", filename);
     FILE* file;
 
     if (strcmp(filename, "STDIN") == 0)
@@ -62,50 +106,9 @@ pair_t filename_to_size(char* filename)
     else
         file = fopen(filename, "r");
     
-    // fprintf(stderr, "file is %p", file);
-
-    if (file == NULL)
-        bad_filename(filename);
-
-
-    char line[LINE_MAX];
-    fgets(line, LINE_MAX, file);
-
-
-    int w,h;
-
-    int ret = sscanf(line, "%d %d", &w, &h);
-    while(ret != 2 && !feof(file)) // while didn't read width-height
-    {   
-        fgets(line, LINE_MAX, file);
-        ret = sscanf(line, "%d %d", &w, &h);
-    }
-
-    fclose(file);
-
-    if (ret != 2)
-    {
-        fprintf(stderr, "Error: Could not get image size in %s\n", filename);
-        exit(1);
-    }
-    else
-    {
-        pair_t pair;
-        pair.width = w;
-        pair.height = h;
-        return pair;
-    }
-}
-
-image_t* filename_to_image(char* filename, pair_t size, int* image_type)
-{
-    FILE* file;
-
-    file = fopen(filename, "r");
     if (!file)
         bad_filename(filename);
 
-    image_t *image = new_image(size.width, size.height);
     
     *image_type = 0;
 
@@ -132,7 +135,6 @@ image_t* filename_to_image(char* filename, pair_t size, int* image_type)
 
     // get image height/width (again)
     int has_read_sizes = 0;
-    int unused_variable;
 
 
     while(!has_read_sizes)
@@ -143,7 +145,7 @@ image_t* filename_to_image(char* filename, pair_t size, int* image_type)
         // printf("Second line:%s", line);
         if (strncmp(line, "#", 1) != 0) // line not a comment
         {
-            int ret = sscanf(line, "%d %d", &unused_variable, &unused_variable);
+            int ret = sscanf(line, "%d %d", &(size->width), &(size->height));
             // printf("2ndLine ret == %d\n", ret);
             if (ret == 2)
                 has_read_sizes = 1;
@@ -151,10 +153,13 @@ image_t* filename_to_image(char* filename, pair_t size, int* image_type)
         }
     }
 
+    image_t *image = new_image(size->width, size->height);
+    
     // get maxvalue
     int has_read_maxvalue = 0;
     while(!feof(file) && !has_read_maxvalue)
     {
+        int unused_variable;
         int ret = fscanf(file, "%d\n", &unused_variable);
         if (ret == 1)
             has_read_maxvalue = 1;
@@ -175,23 +180,25 @@ image_t* filename_to_image(char* filename, pair_t size, int* image_type)
     else if (*image_type == 6) // again, sanity check
     {
         // every time we multiply by 3 is because each pixel is (r, g, b).
-        unsigned char buffer[3]; // store each pixel
-
+        unsigned char buffer[3]; // store each byte
+        
         for (int y = 0; y < image->height; y++)
         {
             // printf("reading pixels from line %d\n", y);
             for(int x = 0; x < image->width; x++)
             {
                 fread(buffer, sizeof(unsigned char), 3, file);
+
                 image->pixels[y][x].r = buffer[0];
                 image->pixels[y][x].g = buffer[1];
                 image->pixels[y][x].b = buffer[2];
             }
         }
-        // printf("Image read.\n");
+        fgetc(file);
     }
 
-    fclose(file);
+    if (strcmp(filename, "STDIN") != 0)
+        fclose(file);
 
     return image;
 }
@@ -225,12 +232,12 @@ pixel_t calculate_predom_colour(image_t* image, pair_t start_coord, pair_t end_c
     int pixels_n = 0;
     pixel_t pixel;
 
-    for(int y = start_coord.height; y < end_coord.height; y++)
+    for(int y = start_coord.height; y < end_coord.height && y < image->height; y++)
     {
-        for(int x = start_coord.width; x < end_coord.width; x++)
+        for(int x = start_coord.width; x < end_coord.width && x< image->width; x++)
         {
-            // printf("%d-%d\n", y, x);
             pixel = image->pixels[y][x];
+
 
             red_s += pixel.r * pixel.r;
             green_s += pixel.g * pixel.g;
@@ -258,20 +265,40 @@ double colour_difference(pixel_t p, pixel_t q)
     return difference;
 }
 
-void replace_chunk(image_t* to_fill, image_t* filler, pair_t start)
+void replace_chunk(image_t* to_fill, image_t* filler, pair_t start, pair_t end)
 {
+    // printf("start.height + filler->height - 1 < to_fill->height == %d\n", start.height + filler->height - 1 < to_fill->height);
+    // if ((start.height + filler->height - 1 < to_fill->height) == 0)
+    //     printf("%d + %d -1 < %d\n", start.height, filler->height, to_fill->height);
 
-    for (int i = 0; i < filler->height; i++)
+    int y = 0;
+    for (int i = start.height; i < end.height; i++)
     {
-        for (int j = 0; j < filler->width; j++)
+        int x = 0;
+        for (int j = start.width; j < end.width ; j++)
         {
-            // print_pixel(filler->pixels[i][j]);
-            to_fill->pixels[start.height + i][start.width + j].r = filler->pixels[i][j].r;
-            to_fill->pixels[start.height + i][start.width + j].g = filler->pixels[i][j].g;
-            to_fill->pixels[start.height + i][start.width + j].b = filler->pixels[i][j].b;
+            to_fill->pixels[i][j] = filler->pixels[y][x];
+            x++;
         }
+        y++;
     }
 }
+
+void free_image(image_t* image)
+{
+    for(int i = 0; i < image->height; i++)
+    {
+        free(image->pixels[i]);
+    }
+
+    free(image->pixels);
+
+    free(image);
+
+}
+
+
+
 
 void write_image(image_t* image, char* filename, int image_type)
 {
@@ -282,8 +309,6 @@ void write_image(image_t* image, char* filename, int image_type)
     else
         file = fopen(filename, "w");
 
-    char* buffer = (char*) malloc (image->width * 3 * 5 * sizeof(char));
-   
    // header
 
     if (image_type == 3)
@@ -292,46 +317,37 @@ void write_image(image_t* image, char* filename, int image_type)
         fputs("P6\n", file);
 
     // width, height
-    sprintf(buffer, "%d %d\n", image->width, image->height);
-    fputs(buffer, file);
+    fprintf(file, "%d %d\n", image->width, image->height);
 
     //maxvalue
-    sprintf(buffer, "%d\n", 255);
-    fputs(buffer, file);
+    fprintf(file, "%d\n", 255);
 
     if (image_type == 3)
     {
         for (int i = 0; i < image->height; i++)
         {
-            // strcpy(buffer, ""); // clear buffer
-
-            for (int j = 0; j < image->width; j++)
+             for (int j = 0; j < image->width; j++)
             {
-                // char pix[20]; // enough to store every pixel
-
-                // sprintf(pix, "%d %d %d ", image->pixels[i][j].r, image->pixels[i][j].g, image->pixels[i][j].b);
                 fprintf(file, "%d %d %d ", image->pixels[i][j].r, image->pixels[i][j].g, image->pixels[i][j].b);
-                
-
-                // strcat(buffer, pix);
             }
-
-            // fputs(buffer, file);
+            fprintf(file, "\n");
 
         }
     }
     else // p6
     {
+        char buffer[3];
         for (int i = 0; i < image->height; i++)
         {
             for (int j = 0; j < image->width; j++)
             {
-                buffer[3*j] = image->pixels[i][j].r;
-                buffer[3*j + 1] = image->pixels[i][j].g;
-                buffer[3*j + 2] = image->pixels[i][j].b ; 
+                buffer[0] = image->pixels[i][j].r;
+                buffer[1] = image->pixels[i][j].g;
+                buffer[2] = image->pixels[i][j].b ; 
+
+                fwrite(buffer, sizeof(char), 3, file);
             }
 
-            fwrite(buffer, 3 * sizeof(char), image->width, file);
             fputs("\n", file);
 
         }
