@@ -1,10 +1,10 @@
 # Tiles
 tiles20
+tiles
 tiles_lol
-#Tests
-test.c
-testing
-mine*
+
+# Tests
+*.ppm
 #Binaries
 a.out
 *.o

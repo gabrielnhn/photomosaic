@@ -33,17 +33,17 @@ int main(int argc, char *argv[])
         case 'o': // update output method
             output_is_stdout = 0;
             strncpy(output_file, optarg, LINE_MAX - 1);
-            fprintf(stderr, "%s will be the output\n", optarg);
+            fprintf(stderr, "'%s' will be the output\n", optarg);
             break;
         case 'i': // update input method
             input_is_stdin = 0;
             strncpy(input_file, optarg, LINE_MAX - 1);
-            fprintf(stderr, "%s will be the input\n", optarg);
+            fprintf(stderr, "'%s' will be the input\n", optarg);
             break;
         case 'p': // update 'tiles' directory path
             tiles_dir_is_default = 0;
             tiles_dir = optarg;
-            fprintf(stderr, "%s will be the directory for the tiles\n", optarg);
+            fprintf(stderr, "'%s' will be the directory for the tiles\n", optarg);
             break;
         case ':':
         case '?':
@@ -63,7 +63,7 @@ int main(int argc, char *argv[])
     if (tiles_dir_is_default)
         tiles_dir = "./tiles";
 
-    fprintf(stderr, "Reading tiles from %s\n", tiles_dir);
+    fprintf(stderr, "Reading tiles from '%s'\n", tiles_dir);
 
     // opening the tiles directory
 
@@ -72,7 +72,7 @@ int main(int argc, char *argv[])
     d = opendir(tiles_dir);
     if (!d)
     {
-        fprintf(stderr, "Error opening 'tiles' directory\n");
+        fprintf(stderr, "Error opening 'tiles' directory %s\n", tiles_dir);
         exit(1);
     }
     rewinddir(d);
@@ -119,7 +119,9 @@ int main(int argc, char *argv[])
     {
         if (strcmp(dir->d_name, ".") && strcmp(dir->d_name, ".."))
         {
+            fprintf(stderr, "%d tiles read until now\n", i);
             char *file_path_str = file_path(tiles_dir, dir->d_name);
+            printf("%s\n", file_path_str);
             tiles[i] = filename_to_image(file_path_str, tile_size, &type);
 
 

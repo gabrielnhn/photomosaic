@@ -16,14 +16,13 @@ void bad_filename(char filename[])
 
 char* file_path(char dir[], char file[])
 {
-
-    char point_slash[] = "./";
+    // char point_slash[] = "./";
     char slash[] = "/";
 
     char* file_path_str= (char*) malloc (sizeof(char) * LINE_MAX);
     
-    strcpy(file_path_str, point_slash);
-    strcat(file_path_str, dir);
+    // strcpy(file_path_str, point_slash);
+    strcpy(file_path_str, dir);
     strcat(file_path_str, slash); 
 
     strcat(file_path_str, file);
@@ -100,7 +99,6 @@ pair_t filename_to_size(char* filename)
 
 image_t* filename_to_image(char* filename, pair_t size, int* image_type)
 {
-
     FILE* file;
 
     file = fopen(filename, "r");
@@ -193,6 +191,7 @@ image_t* filename_to_image(char* filename, pair_t size, int* image_type)
         // printf("Image read.\n");
     }
 
+    fclose(file);
 
     return image;
 }
@@ -284,9 +283,6 @@ void write_image(image_t* image, char* filename, int image_type)
         file = fopen(filename, "w");
 
     char* buffer = (char*) malloc (image->width * 3 * 5 * sizeof(char));
-    // we'll use the same buffer no matter what type of image.
-    // the buffer should, therefore, be able to store every char of a p3 image line.
-    // Assuming we need 3chars for each number in RGB(3 values), the spaces and possibly the minus sign ("-")..
    
    // header
 
@@ -307,18 +303,20 @@ void write_image(image_t* image, char* filename, int image_type)
     {
         for (int i = 0; i < image->height; i++)
         {
-            strcpy(buffer, ""); // clear buffer
+            // strcpy(buffer, ""); // clear buffer
 
             for (int j = 0; j < image->width; j++)
             {
-                char pix[20]; // enough to store every pixel
+                // char pix[20]; // enough to store every pixel
 
-                sprintf(pix, "%d %d %d ", image->pixels[i][j].r, image->pixels[i][j].g, image->pixels[i][j].b);
+                // sprintf(pix, "%d %d %d ", image->pixels[i][j].r, image->pixels[i][j].g, image->pixels[i][j].b);
+                fprintf(file, "%d %d %d ", image->pixels[i][j].r, image->pixels[i][j].g, image->pixels[i][j].b);
                 
-                strcat(buffer, pix);
+
+                // strcat(buffer, pix);
             }
 
-            fputs(buffer, file);
+            // fputs(buffer, file);
 
         }
     }
