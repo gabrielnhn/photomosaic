@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
-#include <ctype.h> // using isprint()
+#include <ctype.h> 
 #include <stdlib.h>
-#include <dirent.h> // accessing directories
+#include <dirent.h> 
 
 #include "functions.h"
 
@@ -20,7 +20,7 @@ int main(int argc, char *argv[])
     char *tiles_dir;
 
     opterr = 0;
-    int c = getopt(argc, argv, "ho:p:i:");
+    int c = getopt(argc, argv, "ho:p:i:"); // GNU GetOpt
     while (c != -1)
     {
         switch (c)
@@ -86,6 +86,7 @@ int main(int argc, char *argv[])
     int tiles_n = 0;
     while ((dir = readdir(d)) != NULL)
     {
+        // avoid special files "." and ".."
         // remember, when str1 == str2, strcmp == 0.
         if (strcmp(dir->d_name, ".") && strcmp(dir->d_name, ".."))
             tiles_n++;
@@ -172,6 +173,7 @@ int main(int argc, char *argv[])
             chunk_end.height = y + tile_size.height;
             chunk_end.width = x + tile_size.width;
 
+            // if the tile wont fit in the image
             if (chunk_end.height  > input_image->height)
                 chunk_end.height = input_image->height;
 
