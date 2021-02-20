@@ -18,7 +18,7 @@ functions.o: functions.c functions.h
 	$(CC) $(CFLAGS) -c functions.c
 
 purge: clean
-	rm mosaico
+	rm -f mosaico
 	
 clean:
-	rm *.o
+	rm -f *.o
