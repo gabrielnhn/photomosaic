@@ -6,7 +6,7 @@ LDLIBS = -lm
 all: mosaico
 
 mosaico: main.o functions.o
-	$(CC) $(CFLAGS) main.o functions.o -o mosaico  $(LDLIBS)
+	$(CC) $(CFLAGS) main.o functions.o -o mosaic  $(LDLIBS)
 
 main.o: main.c
 	$(CC) $(CFLAGS) -c main.c  $(LDLIBS)
