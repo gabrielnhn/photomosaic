@@ -11,3 +11,7 @@ $ make
 ```console
 $ ./mosaic -i {{input.ppm}} -o {{output.ppm}} -p {{tiles_directory}}
 ```
+
+### Example:
+
+![tlou6](/tlou.jpeg)
